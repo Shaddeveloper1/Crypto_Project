@@ -14,11 +14,24 @@ import "./styles.css";
 
 function Grid({ coin }) {
     const [added, setAdded] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
 
-    useEffect(()=>{
-        setAdded(isAdded(coin.id))
-    },[coin]);
-    // console.log("added", added);
+    useEffect(() => {
+        setAdded(isAdded(coin.id));
+    }, [coin]);
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (added) {
+                removeFromWatchlist(coin.id);
+                setAdded(false);
+            } else {
+                addToWatchlist(coin.id);
+                setAdded(true);
+            }
+        }
+    };
 
     return (
         <Link to={`/coin/${coin.id}`}>
@@ -26,12 +39,20 @@ function Grid({ coin }) {
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 1 }}
-                className={`grid-container ${coin.price_change_percentage_24h < 0 && "grid-container-red"
-                    }`}
+                className={`grid-container ${coin.price_change_percentage_24h < 0 && "grid-container-red"}`}
+                role="article"
+                aria-label={`${coin.name} cryptocurrency card`}
             >
                 <div className="cointainer-flex">
                     <div className="info-flex">
-                        <img src={coin.image} className="coin-logo" />
+                        <img 
+                            src={coin.image} 
+                            className={`coin-logo ${!imageLoaded ? 'hidden' : ''}`}
+                            loading="lazy"
+                            onLoad={() => setImageLoaded(true)}
+                            alt={`${coin.name} logo`}
+                        />
+                        {!imageLoaded && <div className="image-skeleton" role="presentation"></div>}
                         <div className="name-col">
                             <p className="coin-symbol">{coin.symbol}</p>
                             <p className="coin-name">{coin.name}</p>
@@ -50,6 +71,9 @@ function Grid({ coin }) {
 
                             }
                         }}
+                        onKeyPress={handleKeyPress}
+                        aria-label={added ? `Remove ${coin.name} from watchlist` : `Add ${coin.name} to watchlist`}
+                        aria-pressed={added}
                     >
                         {
                             added ? (
@@ -64,14 +88,14 @@ function Grid({ coin }) {
 
                 {
                     coin.price_change_percentage_24h > 0 ? (
-                        <div className="chip-flex">
-                            <div className="price-chip">{coin.price_change_percentage_24h.toFixed(2)}%</div>
-                            <div className="icon-chip"><TrendingUpRoundedIcon /></div>
+                        <div className="chip-flex" role="status">
+                            <div className="price-chip" aria-label={`Price up ${coin.price_change_percentage_24h.toFixed(2)}%`}>{coin.price_change_percentage_24h.toFixed(2)}%</div>
+                            <div className="icon-chip"><TrendingUpRoundedIcon aria-hidden="true" /></div>
                         </div>
                     ) : (
-                        <div className="chip-flex">
-                            <div className="price-chip chip-red">{coin.price_change_percentage_24h.toFixed(2)}%</div>
-                            <div className="icon-chip chip-red"><TrendingDownRoundedIcon /></div>
+                        <div className="chip-flex" role="status">
+                            <div className="price-chip chip-red" aria-label={`Price down ${Math.abs(coin.price_change_percentage_24h).toFixed(2)}%`}>{coin.price_change_percentage_24h.toFixed(2)}%</div>
+                            <div className="icon-chip chip-red"><TrendingDownRoundedIcon aria-hidden="true" /></div>
                         </div>
                     )
                 }

@@ -1,33 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ArrowCircleUpRoundedIcon from '@mui/icons-material/ArrowCircleUpRounded';
-import "./styles.css"
+import "./styles.css";
 
-function BackToTop(){
-    let mybutton = document.getElementById("myBtn");
+function BackToTop() {
+    const [isVisible, setIsVisible] = useState(false);
 
-// When the user scrolls down 20px from the top of the document, show the button
-window.onscroll = function() {scrollFunction()};
+    useEffect(() => {
+        const toggleVisibility = () => {
+            if (window.pageYOffset > 20) {
+                setIsVisible(true);
+            } else {
+                setIsVisible(false);
+            }
+        };
 
-function scrollFunction() {
-  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    mybutton.style.display = "flex";
-  } else {
-    mybutton.style.display = "none";
-  }
-}
+        window.addEventListener('scroll', toggleVisibility);
+        return () => window.removeEventListener('scroll', toggleVisibility);
+    }, []);
 
-// When the user clicks on the button, scroll to the top of the document
-function topFunction() {
-  document.body.scrollTop = 0;
-  document.documentElement.scrollTop = 0;
-}
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
 
-    return(
-        <div className="back-to-top-btn" id="myBtn" onClick={() => topFunction()}>
-            <ArrowCircleUpRoundedIcon style={{ color: "var(--blue)"}}/>
-        </div>
-    )
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            scrollToTop();
+        }
+    };
 
+    if (!isVisible) return null;
+
+    return (
+        <button
+            className="back-to-top-btn"
+            onClick={scrollToTop}
+            onKeyPress={handleKeyPress}
+            aria-label="Scroll to top"
+            tabIndex={0}
+        >
+            <ArrowCircleUpRoundedIcon style={{ color: "var(--blue)" }} aria-hidden="true" />
+        </button>
+    );
 }
 
 export default BackToTop;

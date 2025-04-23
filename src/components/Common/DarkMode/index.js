@@ -1,10 +1,12 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { styled } from "@mui/material/styles";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { toast } from "react-toastify";
+import { useTheme } from "../../../hooks/useTheme";
 
-export default function DarkMode({ selectedTheme }) {
+export default function DarkMode() {
+    const { selectedTheme, toggleTheme } = useTheme();
+
     const MaterialUISwitch = styled(Switch)(({ theme }) => ({
         width: 62,
         height: 34,
@@ -52,34 +54,12 @@ export default function DarkMode({ selectedTheme }) {
         },
     }));
 
-    const setDarkMode = () => {
-        document.querySelector("body").setAttribute("data-theme", "dark");
-        localStorage.setItem("selectedTheme", "dark");
-    };
-    const setLightMode = () => {
-        document.querySelector("body").setAttribute("data-theme", "light");
-        localStorage.setItem("selectedTheme", "light");
-    };
-
-
-    if (selectedTheme === "dark") {
-        setDarkMode();
-    } else {
-        setLightMode();
-    }
-
-
-    const toggleTheme = (e) => {
-        if (e.target.checked) setDarkMode();
-        else setLightMode();
-    };
-    
     return (
         <FormControlLabel
             control={
                 <MaterialUISwitch
                     sx={{ m: 1 }}
-                    defaultChecked={selectedTheme === "dark"}
+                    checked={selectedTheme === "dark"}
                     onChange={toggleTheme}
                 />
             }

@@ -1,148 +1,143 @@
-import React, { useEffect, useState } from "react";
-import Header from "../components/Common/Header";
-import Loader from "../components/Common/Loader";
+import React, { useState } from "react";
 import SelectCoins from "../components/Compare/SelectCoins";
 import SelectDays from "../components/Coin/SelectDays";
-import { getCoinData } from "../functions/getCoinData";
-import { coinObject } from "../functions/convertObject";
-import { getCoinPrices } from "../functions/getCoinPrices";
 import List from "../components/Dashboard/List";
 import CoinInfo from "../components/Coin/CoinInfo";
-import { settingChartData } from "../functions/settingChartData";
 import LineChart from "../components/Coin/LineChart";
 import TogglePriceType from "../components/Coin/PriceType";
+import { useCoinData } from "../hooks/useCoinData";
+import { useChartData } from "../hooks/useChartData";
+import { GridSkeleton } from "../components/Common/SkeletonLoader";
+import { toast } from "react-toastify";
 
 function ComparePage() {
     const [crypto1, setCrypto1] = useState("bitcoin");
-    const [crypto2, setCrypto2] = useState("tron");
-    const [cryptoData, setCryptoData] = useState();
-    const [crypto2Data, setCrypto2Data] = useState();
-    const [isLoading, setIsLoading] = useState(true);
-    const [priceType, setPriceType] = useState("prices");
+    const [crypto2, setCrypto2] = useState("ethereum");
     const [days, setDays] = useState(30);
-    const [chartData, setChartData] = useState({});
+    const [priceType, setPriceType] = useState("prices");
 
+    const { 
+        data: crypto1Data, 
+        prices: prices1, 
+        isLoading: isLoading1, 
+        error: error1 
+    } = useCoinData(crypto1, days, priceType);
 
-    async function handleDaysChange(event) {
-        setIsLoading(true);
+    const { 
+        data: crypto2Data, 
+        prices: prices2, 
+        isLoading: isLoading2, 
+        error: error2 
+    } = useCoinData(crypto2, days, priceType);
+
+    const { chartData, refreshChartData } = useChartData(
+        prices1,
+        prices2,
+        crypto1Data?.name,
+        crypto2Data?.name
+    );
+
+    const handleDaysChange = (event) => {
         setDays(event.target.value);
-        const prices1 = await getCoinPrices(crypto1, event.target.value, priceType);
-        const prices2 = await getCoinPrices(crypto2, event.target.value, priceType);
-        settingChartData(setChartData, prices1, prices2, cryptoData.name, crypto2Data.name);
-        setIsLoading(false);
-    }
+    };
 
-    const handlePriceTypeChange = async (event, newType) => {
-        setIsLoading(true);
-        if (newType == null) {
-            const prices1 = await getCoinPrices(crypto1, days, priceType);
-            const prices2 = await getCoinPrices(crypto2, days, priceType);
-            settingChartData(setChartData, prices1, prices2, cryptoData.name, crypto2Data.name);
-            setIsLoading(false);
-        }
-        else {
+    const handlePriceTypeChange = (event, newType) => {
+        if (newType !== null) {
             setPriceType(newType);
-            const prices1 = await getCoinPrices(crypto1, days, newType);
-            const prices2 = await getCoinPrices(crypto2, days, newType);
-            settingChartData(setChartData, prices1, prices2, cryptoData.name, crypto2Data.name);
-            setIsLoading(false);
+            refreshChartData();
         }
-    }
+    };
 
-
-useEffect(() => {
-    getData();
-}, []);
-
-async function getData() {
-    setIsLoading(true);
-    const data1 = await getCoinData(crypto1);
-    const data2 = await getCoinData(crypto2);
-    if (data1) {
-        coinObject(setCryptoData, data1);
-    }
-    if (data2) {
-        coinObject(setCrypto2Data, data2);
-    }
-    if (data1 && data2) {
-        const prices1 = await getCoinPrices(crypto1, days, priceType);
-        const prices2 = await getCoinPrices(crypto2, days, priceType);
-        if (prices1.length > 0 && prices2.length > 0) {
-            settingChartData(setChartData, prices1, prices2, data1.name, data2.name);
-            // console.log("BOTH", prices1, prices2);
-            setIsLoading(false);
+    const handleCoinChange = (event, isCoin2) => {
+        try {
+            const newValue = event.target.value;
+            if (isCoin2) {
+                if (newValue === crypto1) {
+                    toast.error("Please select a different coin");
+                    return;
+                }
+                setCrypto2(newValue);
+            } else {
+                if (newValue === crypto2) {
+                    toast.error("Please select a different coin");
+                    return;
+                }
+                setCrypto1(newValue);
+            }
+            refreshChartData();
+        } catch (error) {
+            console.error("Error changing coin:", error);
+            toast.error("Failed to update coin selection");
         }
-    }
-}
+    };
 
-const handleCoinChange = async (event, isCoin2) => {
-    setIsLoading(true);
-    if (isCoin2) {
-        setCrypto2(event.target.value);
-        const data = await getCoinData(event.target.value);
-        if (data) {
-            coinObject(setCrypto2Data, data);
-        }
-        const prices1 = await getCoinPrices(crypto1, days, priceType);
-        const prices2 = await getCoinPrices(crypto2, days, priceType);
-        settingChartData(setChartData, prices1, prices2, cryptoData.name, data.name)
-    }
-    else {
-        setCrypto1(event.target.value);
-        const data = await getCoinData(event.target.value);
-        if (data) {
-            coinObject(setCryptoData, data);
-        }
-        const prices1 = await getCoinPrices(crypto1, days, priceType);
-        const prices2 = await getCoinPrices(crypto2, days, priceType);
-        settingChartData(setChartData, prices1, prices2, data.name, crypto2Data.name)
-    }
-    setIsLoading(false);
-};
+    const isLoading = isLoading1 || isLoading2;
+    const hasError = error1 || error2;
 
+    if (hasError) {
+        return (
+            <div className="error-container" role="alert">
+                <h2>Error loading comparison data</h2>
+                <p>{error1?.message || error2?.message}</p>
+                <button onClick={() => window.location.reload()}>
+                    Try Again
+                </button>
+            </div>
+        );
+    }
 
-return (
-    <div>
-        {/* <Header /> */}
-        {
-            isLoading ? (
-                <Loader />
+    return (
+        <div>
+            <div className="coins-days-flex">
+                <SelectCoins
+                    crypto1={crypto1}
+                    crypto2={crypto2}
+                    handleCoinChange={handleCoinChange}
+                />
+                <SelectDays
+                    days={days}
+                    handleDaysChange={handleDaysChange}
+                    noPadding={true}
+                />
+            </div>
+
+            {isLoading ? (
+                <div className="grey-wrapper">
+                    <GridSkeleton count={2} />
+                </div>
             ) : (
                 <>
-                    <div className="coins-days-flex">
-                        <SelectCoins
-                            crypto1={crypto1}
-                            crypto2={crypto2}
-                            handleCoinChange={handleCoinChange}
-                        />
-
-                        <SelectDays
-                            days={days}
-                            handleDaysChange={handleDaysChange}
-                        />
+                    <div className="grey-wrapper" role="region" aria-label="Crypto 1 Information">
+                        <List coin={crypto1Data} />
                     </div>
-
-                    <div className="grey-wrapper">
-                        <List coin={cryptoData} />
-                    </div>
-                    <div className="grey-wrapper">
+                    <div className="grey-wrapper" role="region" aria-label="Crypto 2 Information">
                         <List coin={crypto2Data} />
                     </div>
 
                     <div className="grey-wrapper">
-                        <div className="TogglePriceType-padding"><TogglePriceType priceType={priceType} handlePriceTypeChange={handlePriceTypeChange} /></div>
-                        <LineChart chartData={chartData} priceType={priceType} multiAxis={true} />
+                        <div className="toggle-flex">
+                            <TogglePriceType 
+                                priceType={priceType} 
+                                handlePriceTypeChange={handlePriceTypeChange}
+                            />
+                        </div>
+                        <LineChart 
+                            chartData={chartData} 
+                            priceType={priceType} 
+                            multiAxis={true}
+                        />
                     </div>
 
-                    <CoinInfo heading={cryptoData.name} desc={cryptoData.desc} />
-                    <CoinInfo heading={crypto2Data.name} desc={crypto2Data.desc} />
+                    <div className="grey-wrapper">
+                        <CoinInfo heading={crypto1Data?.name} desc={crypto1Data?.desc} />
+                    </div>
+                    <div className="grey-wrapper">
+                        <CoinInfo heading={crypto2Data?.name} desc={crypto2Data?.desc} />
+                    </div>
                 </>
-            )
-        }
-    </div>
-);
-    }
-
-
+            )}
+        </div>
+    );
+}
 
 export default ComparePage;

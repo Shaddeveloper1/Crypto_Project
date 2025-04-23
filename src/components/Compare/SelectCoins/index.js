@@ -33,8 +33,13 @@ function SelectCoins({crypto1, crypto2, handleCoinChange}) {
     }, []);
 
     async function getData() {
-        const myCoins = await get100Coins();
-        setAllCoins(myCoins);
+        try {
+            const myCoins = await get100Coins();
+            setAllCoins(myCoins || []);
+        } catch (error) {
+            console.error("Error fetching coins:", error);
+            setAllCoins([]);
+        }
     }
 
     return (
@@ -47,7 +52,7 @@ function SelectCoins({crypto1, crypto2, handleCoinChange}) {
                 onChange={(event)=>handleCoinChange(event,false)}
             >
                 {
-                    allCoins.filter((item) => item.id != crypto2)
+                    allCoins.filter((item) => item.id !== crypto2)
                     .map ((coin)=>(
                         <MenuItem key={coin.id} value={coin.id}>{coin.name}</MenuItem>
                     ))
@@ -63,7 +68,7 @@ function SelectCoins({crypto1, crypto2, handleCoinChange}) {
                 onChange={(event)=>handleCoinChange(event,true)}
             >
                 {
-                    allCoins.filter((item) => item.id != crypto1)
+                    allCoins.filter((item) => item.id !== crypto1)
                     .map((coin) => (
                         <MenuItem key={coin.id} value={coin.id}>{coin.name}</MenuItem>
                     ))

@@ -1,16 +1,16 @@
-.list-row{
+.list-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0.5rem; 
-    margin: 1rem 0rem;
-    padding: 0.4rem  1rem;
-    border-radius: 1rem;
+    padding: 0.4rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+    height: 100%;
 }
 
-.list-row:hover{
+.list-row:hover {
     background-color: var(--darkgrey);
-    transition: all 0.3s;
 }
 
 .list-row td{
@@ -120,14 +120,14 @@
 }
 
 
-/* @media screen and (max-width: 400px){
+/* Virtual list specific styles */
+.list-table {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
 
-    .mobile-td-mkt{
-        display: none;
-    }
-
-    .list-row{
-        gap: 0.5rem; 
-
-    }
-} */
+.virtual-row {
+    width: 100%;
+    padding: 0.25rem 0;
+}

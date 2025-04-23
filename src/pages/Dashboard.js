@@ -8,61 +8,74 @@ import PaginationComponent from "../components/Dashboard/PaginationComponent";
 import Loader from "../components/Common/Loader";
 import BackToTop from "../components/Common/BackToTop";
 import { get100Coins } from "../functions/get100Coins";
-
+import { useDebounce } from "../hooks/useDebounce";
+import { GridSkeleton, ListSkeleton } from "../components/Common/SkeletonLoader";
 
 function DashboardPage() {
     const [coins, setCoins] = useState([]);
-    const [paginatedCoins, setpaginatedCoins] = useState([]);
+    const [paginatedCoins, setPaginatedCoins] = useState([]);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const [view, setView] = useState('grid');
+
+    const debouncedSearch = useDebounce(search, 300);
 
     const handlePageChange = (event, value) => {
         setPage(value);
-        var previousIndex = (value - 1) * 10;
-        setpaginatedCoins(coins.slice(previousIndex, previousIndex + 10));
+        const previousIndex = (value - 1) * 10;
+        setPaginatedCoins(coins.slice(previousIndex, previousIndex + 10));
     };
 
     const onSearchChange = (e) => {
-        // console.log(e.target.value);
         setSearch(e.target.value);
     }
 
-    var filteredCoins = coins.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-        || item.symbol.toLowerCase().includes(search.toLowerCase())
+    const handleViewChange = (newView) => {
+        setView(newView);
+    };
+
+    const filteredCoins = coins.filter((item) =>
+        item.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        || item.symbol.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
 
     useEffect(() => {
-        getData()
+        getData();
     }, []);
 
     const getData = async () => {
-        const myCoins = await get100Coins();
-        if (myCoins) {
-            setCoins(myCoins);
-            setpaginatedCoins(myCoins.slice(0, 10));
+        try {
+            const myCoins = await get100Coins();
+            if (myCoins) {
+                setCoins(myCoins);
+                setPaginatedCoins(myCoins.slice(0, 10));
+            }
+        } catch (error) {
+            console.error("Error fetching coins:", error);
+        } finally {
             setIsLoading(false);
         }
     }
 
     return (
         <>
-            {/* <Header /> */}
             <BackToTop />
-            {
-                isLoading ? (
-                    <Loader />
-                ) : (
-                    <div>
-                        <Search search={search} onSearchChange={onSearchChange} />
-                        <TabsComponent coins={search ? filteredCoins : paginatedCoins} />
-                        {!search && (
-                            <PaginationComponent page={page} handlePageChange={handlePageChange} />
-                        )}
-                    </div>
-                )
-            }
+            <Search search={search} onSearchChange={onSearchChange} />
+            {isLoading ? (
+                view === 'grid' ? <GridSkeleton /> : <ListSkeleton />
+            ) : (
+                <>
+                    <TabsComponent 
+                        coins={debouncedSearch ? filteredCoins : paginatedCoins} 
+                        onViewChange={handleViewChange}
+                        currentView={view}
+                    />
+                    {!debouncedSearch && (
+                        <PaginationComponent page={page} handlePageChange={handlePageChange} />
+                    )}
+                </>
+            )}
         </>
     )
 };

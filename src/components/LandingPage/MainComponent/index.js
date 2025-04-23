@@ -8,8 +8,22 @@ import {Link} from "react-router-dom";
 
 import { motion } from "framer-motion";
 
-
 function MainComponent() {
+    const handleShare = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: 'CryptoTracker',
+                text: 'Track cryptocurrency prices in real-time!',
+                url: window.location.href,
+            })
+            .catch((error) => console.log('Error sharing:', error));
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(window.location.href)
+            .then(() => alert('Link copied to clipboard!'))
+            .catch((error) => console.log('Error copying:', error));
+        }
+    };
 
     return (
         <div className="flex-info">
@@ -47,12 +61,15 @@ function MainComponent() {
                         outlined={false}
                         onClick={() => console.log("btn clicked")} />
                     </Link>
-                    <Button text={"Share"} outlined={true} />
+                    <Button text={"Share"} outlined={true} onClick={handleShare} />
                 </motion.div>
             </div>
 
             <div className="phone-container">
-                <motion.img src={iphone} className="iphone"
+                <motion.img 
+                    src={iphone} 
+                    className="iphone"
+                    alt="iPhone mockup showing crypto tracking interface"
                     initial={{ y: -10 }}
                     animate={{ y: 10 }}
                     transition={{
@@ -61,9 +78,12 @@ function MainComponent() {
                         duration: 2,
                         repeat: Infinity,
                     }}
-
-                ></motion.img>
-                <img src={gradient} className="gradient"></img>
+                />
+                <img 
+                    src={gradient} 
+                    className="gradient" 
+                    alt="Decorative background gradient" 
+                />
             </div>
 
         </div>

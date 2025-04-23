@@ -123,3 +123,30 @@
     gap: 4rem;
     align-items: center;
 }
+
+.hidden {
+    opacity: 0;
+}
+
+.image-skeleton {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: linear-gradient(
+        90deg,
+        var(--darkgrey) 25%,
+        var(--grey) 50%,
+        var(--darkgrey) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 50%;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
